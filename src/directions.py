@@ -2,10 +2,15 @@
 import os
 import json
 import requests
+import yaml
 from urllib.parse import quote
 
 
-TOKEN = "###"
+def get_token() -> str:
+    with open("config.yml", 'r') as f:
+        config = yaml.safe_load(f)
+    
+    return config['mapbox_token']
 
 def get_json_geometry(row):
     s1 = str(int(row['start_station_code']))
@@ -21,10 +26,11 @@ def get_json_geometry(row):
 
 def get_directions(c1,c2,s1,s2):
     #TODO: Change this awful quote functions
+    token = get_token()
     coord = quote("%f,%f;%f,%f" % (c1[1],c1[0],c2[1],c2[0]))
     url = 'https://api.mapbox.com/directions/v5/mapbox/cycling/' 
     params = {
-        'access_token': TOKEN,
+        'access_token': token,
         'steps': 'false',
         'alternatives': 'false',
         'geometries': 'polyline'

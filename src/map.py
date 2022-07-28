@@ -11,16 +11,19 @@ end_datetime = datetime.datetime(2019,7,22,9,30,0)
 
 
 # Reading Bixi data into Pandas dataframes
-df = pd.read_csv('data/OD_2019-07.csv')
-st = pd.read_csv('data/Stations_2019.csv')
+print("Reading data files...")
+df = pd.read_csv('../data/OD_2019-07.csv')
+st = pd.read_csv('../data/Stations_2019.csv')
 
 # Converting datetimes
+print("Formatting dataframe dates...")
 df['start_date'] = pd.to_datetime(df['start_date'])
 df['end_date'] = pd.to_datetime(df['end_date'])
 df['hour'] = df['start_date'].map(lambda x : x.hour)
 df['dow'] = df['start_date'].map(lambda x : x.weekday())
 
 # Joining stations metadata to trip data
+print("Joining stations metadata to trip data...")
 data = df.merge(st, left_on = 'start_station_code', right_on = 'Code')
 data.rename(columns=dict(zip(st.columns.values,["start_station_" + x.lower() for x in st.columns.values])),inplace = True)
 data = data.merge(st, left_on = 'end_station_code', right_on = 'Code')
@@ -28,6 +31,7 @@ data.rename(columns=dict(zip(st.columns.values,["end_station_" + x.lower() for x
 data = data.loc[:,~data.columns.duplicated()]
 
 # Group data by all start/end station combinations and add the trip count
+print("Aggregating trip data to status/end station combinations...")
 comb = data.groupby([
     'start_station_code',
     'start_station_latitude', 
@@ -43,16 +47,19 @@ routes = comb[(comb['start_station_code'] != comb['end_station_code'])].reset_in
 
 # Pull all the directions from API and store locally
 for i, row in routes.iloc[0:30000].iterrows():
+    print(f"Processing trip {i} of 30000")
     start_coord = (row['start_station_latitude'], row['start_station_longitude'])
     end_coord = (row['end_station_latitude'],row['end_station_longitude'])
-    if not os.path.exists(f'directions/%s_%s.json' % (str(int(row['start_station_code'])),str(int(row['end_station_code'])))):
+    start_station_code = int(row['start_station_code'])
+    end_station_code = int(row['end_station_code'])
+    if not os.path.exists(f'..directions/{start_station_code}_{end_station_code}json'):
+        print("Downloading direction...")
         geom = get_directions(
             start_coord,
             end_coord,
-            str(int(row['start_station_code'])),
-            str(int(row['end_station_code']))
+            start_station_code,
+            end_station_code
         )
-
 
 # Calculate how many frames needed
 delta = datetime.timedelta(seconds = 10)

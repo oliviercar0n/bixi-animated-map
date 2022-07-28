@@ -2,3 +2,5 @@
 data/
 directions/
 *.ipynb
+**/__pycache__
+config.yml
