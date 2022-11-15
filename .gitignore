@@ -4,3 +4,4 @@ directions/
 *.ipynb
 **/__pycache__
 config.yml
+.DS_STORE
